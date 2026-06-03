@@ -1,0 +1,277 @@
+{
+  "name": "Chat da loja de roupas da B2C",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $(\"Telegram Message Received\").item.json.message.text }}",
+        "options": {
+          "systemMessage": "You are a helpful customer service assistant for a clothing store. Your job is to check product availability using the Check Inventory tool when customers ask about sizes or products. Always be friendly and professional. When checking inventory:\n\n1. Extract the product name and size from the customer message\n2. Use the Check Inventory tool to search the database\n3. If items are found with quantity > 0, tell the customer the item is available\n4. If no items are found or quantity is 0, apologize and say the item is currently out of stock\n5. Keep responses brief and helpful\n\nExample: If customer asks \"Do you have size M in blue shirt?\", use the tool with product_name=\"blue shirt\" and size=\"M\"."
+        }
+      },
+      "id": "28dcf5d9-2f06-4b3e-9621-4da0274792da",
+      "name": "Customer Service Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        528,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $(\"Telegram Message Received\").item.json.message.from.id }}"
+      },
+      "id": "c19aabd8-e3ce-45f7-a403-234a0fad545a",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        592,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "clothing_inventory"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', 'Name of the clothing item (e.g., \"blue shirt\", \"red dress\")') }}",
+              "condition": "contains",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', 'Name of the clothing item (e.g., \"blue shirt\", \"red dress\")') }}"
+            },
+            {
+              "keyName": "size",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('size', 'Size requested (e.g., S, M, L, XL)') }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "id": "4a6339d2-9a65-466e-a7dd-cbce170d01b5",
+      "name": "Check Inventory",
+      "type": "n8n-nodes-base.dataTableTool",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{ $(\"Telegram Message Received\").item.json.message.text.toLowerCase() }}",
+              "rightValue": "olá",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "566ed531-f8c4-415b-b438-066040d5cdf9",
+      "name": "Check If First Message",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "70b04f64-3090-4d3d-8756-76e3d50a3614",
+      "name": "Telegram Message Received",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        352
+      ],
+      "webhookId": "592d21e5-b71f-4322-a57f-6409ec48c3ff",
+      "credentials": {
+        "telegramApi": {
+          "id": "lrphLNqh38uJ8mDl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $(\"Telegram Message Received\").item.json.message.chat.id }}",
+        "text": "Ola! Voce está conversando com o assistente virtual da loja de roupas B2C! Como podemos ajuda-lo hoje?",
+        "additionalFields": {}
+      },
+      "id": "e123dba6-63e5-4797-ab9a-ecf276ea9dc2",
+      "name": "Send Welcome Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        208
+      ],
+      "webhookId": "70240883-220d-4566-8ffc-ac1f6b8e5c9f",
+      "credentials": {
+        "telegramApi": {
+          "id": "lrphLNqh38uJ8mDl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $(\"Telegram Message Received\").item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "a671dedd-103a-4ddc-884f-e8acc2fa575b",
+      "name": "Send AI Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        928,
+        512
+      ],
+      "webhookId": "09ce6d93-517f-44ab-97c5-754f8cfbcb0e",
+      "credentials": {
+        "telegramApi": {
+          "id": "lrphLNqh38uJ8mDl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        464,
+        624
+      ],
+      "id": "4376fc6d-af8b-4809-8dc0-4ef74a848aa7",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "muGBDRsjT6hJkAic",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Service Agent": {
+      "main": [
+        [
+          {
+            "node": "Send AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If First Message": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Message Received": {
+      "main": [
+        [
+          {
+            "node": "Check If First Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2c028bc2-cad5-4925-bb39-9a233cc64589",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e22d55dabd47d0f752ebcc8376d490bd80d6ca70046b715f36546db5fe2f512"
+  },
+  "nodeGroups": [],
+  "id": "llSYkfRu2BISmSL5",
+  "tags": []
+}
