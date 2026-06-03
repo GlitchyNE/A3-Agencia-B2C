@@ -5,3 +5,4 @@ Ferramentas ultilizadas:
 n8n (plataforma no-code)
 telegram (criação de uma api para o chat)
 gemini (geração da API de IA)
+MySQL (banco de dados das roupas da loja)
