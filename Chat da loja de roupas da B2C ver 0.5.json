@@ -1,0 +1,325 @@
+{
+  "name": "Chat da loja de roupas da B2C",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é um assistente virtual da loja de roupas B2C. Seu trabalho é ajudar clientes com:\n\n1. VERIFICAR DISPONIBILIDADE: Use a ferramenta \"Check Inventory Tool\" quando o cliente perguntar sobre produtos ou tamanhos. Informe se está disponível e a quantidade em estoque.\n\n2. CRIAR PEDIDOS: Use a ferramenta \"Create Order Tool\" quando o cliente quiser fazer um pedido. Pergunte nome, produto, tamanho e quantidade antes de criar.\n\n3. EXIBIR PRODUTOS: Quando consultar o inventário, mostre os produtos encontrados de forma clara e organizada.\n\n4. MENSAGEM DE FALLBACK: Se não entender a solicitação, peça educadamente para o cliente reformular e também sugira que se o cliente quiser conversar com uma pessoa fisica entre este numero: (84) +55 988560253.\n\nSempre seja amigável, profissional e responda em português. Mantenha respostas breves e úteis."
+        }
+      },
+      "id": "28dcf5d9-2f06-4b3e-9621-4da0274792da",
+      "name": "Customer Service Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "c19aabd8-e3ce-45f7-a403-234a0fad545a",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        160,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        688
+      ],
+      "id": "4376fc6d-af8b-4809-8dc0-4ef74a848aa7",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "muGBDRsjT6hJkAic",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Olá! Bem-vindo à loja de roupas B2C!\nComo posso ajudá-lo hoje?",
+        "options": {
+          "loadPreviousSession": "memory",
+          "showWelcomeScreen": true,
+          "getStarted": "Iniciar Conversa",
+          "subtitle": "Estamos aqui para ajudá-lo 24/7",
+          "title": "Loja B2C - Assistente Virtual"
+        }
+      },
+      "id": "bae19ba4-6ef0-4414-a2e9-95fccf44c367",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        80,
+        304
+      ],
+      "webhookId": "9b84d0df-5081-4d33-b3bd-ab7d98dcb1fc"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.chatInput }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "rightValue": "não entendi",
+                    "id": "bedd585e-1225-44a2-ae99-fb077f97433e"
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "fallback"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Normal Flow"
+        }
+      },
+      "id": "256a2c6c-2f06-42ff-baf2-385c31f9c025",
+      "name": "Route By Intent",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "output",
+              "value": "Desculpe, não entendi sua solicitação. Posso ajudá-lo a:\n\n1. Verificar disponibilidade de produtos\n2. Criar um pedido\n3. Consultar tamanhos disponíveis\n\nPor favor, reformule sua pergunta.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6c6f98b2-224b-4751-a31d-ae7674460412",
+      "name": "Send Fallback Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        784,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "mode": "name",
+          "value": "<__PLACEHOLDER_VALUE__Nome da tabela de inventário (ex: produtos)__>"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_column', 'Nome da coluna do produto') }}",
+              "condition": "LIKE",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', 'Nome do produto que o cliente procura') }}"
+            },
+            {
+              "column": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('size_column', 'Nome da coluna de tamanho') }}",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('size', 'Tamanho solicitado (P, M, G, etc)') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "96ceebae-54c3-4ad1-9ac7-83bea1cc2d61",
+      "name": "Check Inventory Tool",
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [
+        816,
+        688
+      ],
+      "credentials": {
+        "mySql": {
+          "id": "bK8os45aBW0aw3op",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "table": {
+          "__rl": true,
+          "mode": "name",
+          "value": "<__PLACEHOLDER_VALUE__Nome da tabela de pedidos (ex: pedidos)__>"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name_column', 'Nome da coluna do cliente') }}",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name', 'Nome do cliente') }}"
+            },
+            {
+              "column": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_column', 'Nome da coluna do produto') }}",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('product_name', 'Nome do produto') }}"
+            },
+            {
+              "column": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('size_column', 'Nome da coluna de tamanho') }}",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('size', 'Tamanho') }}"
+            },
+            {
+              "column": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('quantity_column', 'Nome da coluna de quantidade') }}",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('quantity', 'Quantidade') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff50557d-53bf-4047-bc2a-60eb156e2f21",
+      "name": "Create Order Tool",
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        688
+      ],
+      "credentials": {
+        "mySql": {
+          "id": "bK8os45aBW0aw3op",
+          "name": "MySQL account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Service Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Trigger",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Route By Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route By Intent": {
+      "main": [
+        [
+          {
+            "node": "Send Fallback Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Inventory Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "31cb7207-01f2-4392-8858-40ecbeefacd3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e22d55dabd47d0f752ebcc8376d490bd80d6ca70046b715f36546db5fe2f512"
+  },
+  "nodeGroups": [],
+  "id": "llSYkfRu2BISmSL5",
+  "tags": []
+}
