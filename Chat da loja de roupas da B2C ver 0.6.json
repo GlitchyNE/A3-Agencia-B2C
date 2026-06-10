@@ -1,0 +1,176 @@
+{
+  "name": "Chat da loja de roupas da B2C copia de testes",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é um assistente virtual da loja de roupas B2C. Seu trabalho é ajudar clientes com:\n\n1. VERIFICAR DISPONIBILIDADE: Use a ferramenta \"Get a row in Supabase\" quando o cliente perguntar sobre produtos ou tamanhos. Informe os produtos disponiveis e pergunte se algum pegou o seu interesse\n\n2. CRIAR PEDIDOS: nao realizar essa função por enquanto\n\n3. EXIBIR PRODUTOS: Quando consultar o inventário, mostre os produtos encontrados de forma clara e organizada.\n\n4. MENSAGEM DE FALLBACK: Se não entender a solicitação, peça educadamente para o cliente reformular e também sugira que se o cliente quiser conversar com uma pessoa fisica entre este numero: (84) +55 988560253.\n\nSempre seja amigável, profissional e responda em português. Mantenha respostas breves e úteis."
+        }
+      },
+      "id": "fca41fd7-d231-48ab-92be-6a75e123f98e",
+      "name": "Customer Service Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        736,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "6fe8f881-0460-4e24-92d0-d475d428cefa",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        784,
+        640
+      ],
+      "notesInFlow": true,
+      "notes": "Memoria da conversa (até 10 mensagens)"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        608
+      ],
+      "id": "8cb76b88-42b7-47b7-8a44-77f903b68c96",
+      "name": "Google Gemini Chat Model",
+      "notesInFlow": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "muGBDRsjT6hJkAic",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Modelo gemini para a conversa"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Olá! Bem-vindo à loja de roupas B2C!\nComo posso ajudá-lo hoje?",
+        "options": {
+          "loadPreviousSession": "memory",
+          "showWelcomeScreen": true,
+          "getStarted": "Iniciar Conversa",
+          "subtitle": "Estamos aqui para ajudá-lo 24/7",
+          "title": "Loja B2C - Assistente Virtual"
+        }
+      },
+      "id": "dddd1a75-45c5-4d18-9e51-b0e8ca7d939c",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        80,
+        304
+      ],
+      "webhookId": "cc399590-55ed-4d33-8733-15a36e834599"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "produtos_lojas",
+        "orderBy": "id_produto",
+        "filters": {
+          "conditions": []
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        928,
+        640
+      ],
+      "id": "09ab51ac-869e-42e4-9b8e-b06bb6fda545",
+      "name": "Get many rows in Supabase",
+      "notesInFlow": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "IP80ntGCDyfoQq1J",
+          "name": "Supabase account"
+        }
+      },
+      "notes": "Exibição dos produtos"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Service Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Trigger",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b79e5b2d-60c6-4d13-b9a1-5d003cbf76fe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e22d55dabd47d0f752ebcc8376d490bd80d6ca70046b715f36546db5fe2f512"
+  },
+  "nodeGroups": [],
+  "id": "r1Z9RNJlPXIn1iED",
+  "tags": []
+}
