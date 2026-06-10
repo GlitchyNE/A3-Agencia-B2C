@@ -3,7 +3,7 @@ Feito pelo time 3 no projeto do professor glauber galvão araujo na UC exploraç
 Problema ancora:Uma loja de roupas que demora horas para responder perguntas sobre disponibilidade de tamanhos
 Ferramentas ultilizadas:
 n8n (plataforma no-code)
-telegram (criação de uma api para o chat)
+telegram (criação de uma api para o chat,em versões mais antigas)
 gemini (geração da API de IA)
 MySQL (banco de dados das roupas da loja)
 Supabase (banco de dados usado nas versões posteriores)
