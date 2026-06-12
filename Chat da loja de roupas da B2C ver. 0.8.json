@@ -1,0 +1,273 @@
+{
+  "name": "Chat da loja de roupas da B2C ver. supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Você é um assistente virtual da loja de roupas B2C. Seu trabalho é ajudar clientes com:\n\nQuando for se introduzir sempre lembre ao cliente que essa é a loja de roupas B2C\n\n1. VERIFICAR DISPONIBILIDADE: Use a ferramenta \"Get a row in Supabase\" quando o cliente perguntar sobre produtos ou tamanhos. Informe os produtos disponiveis e pergunte se algum pegou o seu interesse\n\n2. CRIAR PEDIDOS: se o cliente demonstar interesse em algum produto memorize esse produto,mande uma mensagem de confirmação e diga se ele tem interesse em mais algum produto e se não tiver se ele gostaria de criar um pedido com os produtos q ele teve interesse,se sim,informe ao cliente que (ATENÇÃO:nos nao temos um sistema de entrega disponivel ainda,então para prosseguir com seu pedido vá até a loja fisica localizada em:Av. Nevaldo Rocha, 3775 - Tirol, Natal - RN, 59015-450) e se mesmo assim ele deseja prosseguir com o pedido,se ele continuar dizendo que sim voce vai pedir o nome COMPLETO e o CPF (apenas numeros,sem traços) dele,tendo os produtos,nome e CPF do cliente voce vai usar a ferramenta \"Create a row in supabase\" (voce vai cadastrar o nome em \"nome_cliente\" sendo um VACHAR,cpf em \"cpf\" sendo um VACHAR,voce vai pegar um resumo do que o cliente pediu e vai botar em \"resumo_produtos\"sendo um TEXT,\"status\" voce vai definir como \"pendente\"sendo um VACHAR) e vai cadastrar os dados dele na tabela de pedidos, se o cliente pergunte se tem mais alguma coisa que possa ajudar.\n\n3. EXIBIR PRODUTOS: Quando consultar o inventário, mostre os produtos encontrados de forma clara e organizada.\n\n4. MENSAGEM DE FALLBACK: Se não entender a solicitação, peça educadamente para o cliente reformular e também sugira que se o cliente quiser conversar com uma pessoa fisica entre este numero: (84) +55 988560253.\n\n5.EXIBIÇÃO DE PEDIDOS,se o cliente deseja saber quais pedidos estão cadastrados com os dados dele,voce vai pedir o nome completo e cpf dele,utilizar a ferramenta \"get a row in supabase\" e de lá voce vai puxar os dados do pedido e exibir para o cliente\n\n\nSempre seja amigável, profissional e responda em português. Mantenha respostas breves e úteis."
+        }
+      },
+      "id": "fca41fd7-d231-48ab-92be-6a75e123f98e",
+      "name": "Customer Service Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        752,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 10
+      },
+      "id": "6fe8f881-0460-4e24-92d0-d475d428cefa",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        784,
+        640
+      ],
+      "notesInFlow": true,
+      "notes": "Memoria da conversa (até 10 mensagens)"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        608
+      ],
+      "id": "8cb76b88-42b7-47b7-8a44-77f903b68c96",
+      "name": "Google Gemini Chat Model",
+      "notesInFlow": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "muGBDRsjT6hJkAic",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "notes": "Modelo gemini para a conversa"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Olá! Bem-vindo à loja de roupas B2C!\nComo posso ajudá-lo hoje?",
+        "options": {
+          "loadPreviousSession": "memory",
+          "showWelcomeScreen": true,
+          "getStarted": "Iniciar Conversa",
+          "subtitle": "Estamos aqui para ajudá-lo 24/7",
+          "title": "Loja B2C - Assistente Virtual"
+        }
+      },
+      "id": "dddd1a75-45c5-4d18-9e51-b0e8ca7d939c",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        80,
+        304
+      ],
+      "webhookId": "cc399590-55ed-4d33-8733-15a36e834599"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "produtos_lojas",
+        "orderBy": "id_produto",
+        "filters": {
+          "conditions": []
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        944,
+        624
+      ],
+      "id": "09ab51ac-869e-42e4-9b8e-b06bb6fda545",
+      "name": "Get many rows in Supabase",
+      "notesInFlow": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "IP80ntGCDyfoQq1J",
+          "name": "Supabase account"
+        }
+      },
+      "notes": "Exibição dos produtos"
+    },
+    {
+      "parameters": {
+        "tableId": "pedidos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "nome_cliente",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues0_Field_Value', ``, 'string') }}"
+            },
+            {
+              "fieldId": "cpf",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues1_Field_Value', ``, 'string') }}"
+            },
+            {
+              "fieldId": "resumo_produtos",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues2_Field_Value', ``, 'string') }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('fieldValues3_Field_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        320
+      ],
+      "id": "656d72f8-bca8-4ac1-b31c-0a697096109e",
+      "name": "Create a row in Supabase",
+      "notesInFlow": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "IP80ntGCDyfoQq1J",
+          "name": "Supabase account"
+        }
+      },
+      "notes": "Criação de pedidos"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "pedidos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "nome_cliente",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions0_Value', ``, 'string') }}"
+            },
+            {
+              "keyName": "cpf",
+              "keyValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('conditions1_Value', ``, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        512
+      ],
+      "id": "5e213d62-984c-4260-9b03-37710f4672d1",
+      "name": "Get a row in Supabase",
+      "notesInFlow": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "IP80ntGCDyfoQq1J",
+          "name": "Supabase account"
+        }
+      },
+      "notes": "exibição de pedidos"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Service Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Chat Trigger",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Service Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c0e8fcf4-59a3-4ae3-a3c1-474f39f79969",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e22d55dabd47d0f752ebcc8376d490bd80d6ca70046b715f36546db5fe2f512"
+  },
+  "nodeGroups": [],
+  "id": "r1Z9RNJlPXIn1iED",
+  "tags": []
+}
